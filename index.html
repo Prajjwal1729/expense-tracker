@@ -67,7 +67,7 @@
             font-weight: bold;
             color: var(--secondary-text-color);
         }
-        input[type="text"], input[type="date"], input[type="number"] {
+        input[type="text"], input[type="date"], input[type="number"], select {
             width: 100%;
             padding: 12px;
             margin-bottom: 1.5em;
@@ -77,6 +77,19 @@
             font-size: 1em;
             background-color: var(--secondary-surface-color);
             color: var(--primary-text-color);
+        }
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 1.5em;
+            align-items: center;
+        }
+        .radio-group input[type="radio"] {
+           accent-color: var(--accent-color);
+        }
+        .radio-group label {
+            margin-bottom: 0;
+            font-weight: normal;
         }
         button {
             width: 100%;
@@ -110,10 +123,9 @@
             color: var(--bg-color);
         }
         #password-modal {
-            display: none; /* Hidden by default */
+            display: none;
             position: fixed;
-            z-index: 1;
-            left: 0; top: 0;
+            z-index: 1; left: 0; top: 0;
             width: 100%; height: 100%;
             background-color: rgba(0,0,0,0.7);
             align-items: center; justify-content: center;
@@ -125,13 +137,10 @@
             text-align: center;
         }
         #table-container {
-            margin-top: 2em;
-            max-height: 500px;
-            overflow-y: auto;
+            margin-top: 2em; max-height: 500px; overflow-y: auto;
         }
         table {
-            width: 100%;
-            border-collapse: collapse;
+            width: 100%; border-collapse: collapse;
         }
         th, td {
             padding: 12px;
@@ -171,14 +180,33 @@
             <input type="date" id="date" name="date" required>
 
             <label for="description">Description:</label>
-            <input type="text" id="description" name="description" placeholder="e.g., Coffee" required>
+            <input type="text" id="description" name="description" placeholder="e.g., Lunch with colleagues" required>
 
             <label for="category">Category:</label>
-            <input type="text" id="category" name="category" placeholder="e.g., Food & Drink" required>
+            <select id="category" name="category" required>
+                <option value="" disabled selected>-- Select a Category --</option>
+                <option value="Food & Dining">Food & Dining</option>
+                <option value="Transportation">Transportation</option>
+                <option value="Home & Utilities">Home & Utilities</option>
+                <option value="Shopping & Personal Care">Shopping & Personal Care</option>
+                <option value="Health & Wellness">Health & Wellness</option>
+                <option value="Entertainment & Subscriptions">Entertainment & Subscriptions</option>
+                <option value="Bills & EMIs">Bills & EMIs</option>
+                <option value="Investment & Savings">Investment & Savings</option>
+                <option value="Miscellaneous / Other">Miscellaneous / Other</option>
+            </select>
 
             <label for="amount">Amount (₹):</label>
-            <input type="number" id="amount" name="amount" placeholder="e.g., 3.50" step="0.01" required>
+            <input type="number" id="amount" name="amount" placeholder="e.g., 250.00" step="0.01" required>
 
+            <label>Payment Mode:</label>
+            <div class="radio-group">
+                <input type="radio" id="online" name="paymentMode" value="Online" checked required>
+                <label for="online">Online</label>
+                <input type="radio" id="cash" name="paymentMode" value="Cash">
+                <label for="cash">Cash</label>
+            </div>
+            
             <button type="submit">Add Expense</button>
             <p id="status"></p>
         </form>
@@ -200,11 +228,10 @@
     </div>
 
     <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbxcKakacZC2t9ywuffliuoJkaSLgu15BCmpIjGzK-8NMgJgAY8R7mqyt5XLQ37_H7do/exec'; // <-- IMPORTANT: MAKE SURE THIS IS YOUR URL
+        const scriptURL = 'YOUR_WEB_APP_URL'; // <-- IMPORTANT: MAKE SURE THIS IS YOUR URL
+        // ... (rest of the script is the same, but included for completeness)
         const form = document.getElementById('expenseForm');
         const statusMsg = document.getElementById('status');
-
-        // New Elements
         const viewExpensesBtn = document.getElementById('view-expenses-btn');
         const tableContainer = document.getElementById('table-container');
         const expenseTableDiv = document.getElementById('expense-table');
@@ -212,13 +239,7 @@
         const passwordInput = document.getElementById('password-input');
         const passwordSubmitBtn = document.getElementById('password-submit');
         const passwordError = document.getElementById('password-error');
-
-        // Store fetched data globally to avoid multiple fetches
         let allExpensesData = [];
-
-        // --- PASSWORD PROTECTION ---
-        // Note: This is NOT high security. It just hides the data from casual viewers.
-        // The password is visible in the page's source code.
         const correctPassword = "kirti@1729";
 
         viewExpensesBtn.addEventListener('click', () => {
@@ -235,16 +256,13 @@
                 passwordError.textContent = 'Incorrect Password.';
             }
         });
-
-        // Close modal if user clicks outside the content
+        
         passwordModal.addEventListener('click', (e) => {
             if (e.target === passwordModal) {
                 passwordModal.style.display = 'none';
             }
         });
 
-
-        // --- ADD NEW EXPENSE (POST DATA) ---
         form.addEventListener('submit', e => {
             e.preventDefault();
             statusMsg.textContent = 'Adding...';
@@ -255,7 +273,6 @@
                     statusMsg.textContent = 'Expense added successfully!';
                     statusMsg.style.color = 'var(--accent-color)';
                     form.reset();
-                    // Refresh data after adding a new expense
                     fetchData();
                     setTimeout(() => { statusMsg.textContent = ''; }, 3000);
                 })
@@ -266,12 +283,10 @@
                 });
         });
 
-        // --- FETCH ALL DATA AND CALCULATE METRICS (GET DATA) ---
         function fetchData() {
             fetch(scriptURL)
                 .then(response => response.json())
                 .then(data => {
-                    // Make sure data is sorted by date, newest first
                     data.sort((a, b) => new Date(b.date) - new Date(a.date));
                     allExpensesData = data;
                     calculateMetrics(data);
@@ -284,31 +299,20 @@
         
         function calculateMetrics(data) {
             if (data.length === 0) return;
-
             const today = new Date();
-            const sevenDaysAgo = new Date(today);
+            const sevenDaysAgo = new Date();
             sevenDaysAgo.setDate(today.getDate() - 7);
-
-            // 1. Last 7 Days Spend
-            const last7DaysSpend = data
-                .filter(item => new Date(item.date) >= sevenDaysAgo)
-                .reduce((sum, item) => sum + Number(item.amount), 0);
+            const last7DaysSpend = data.filter(item => new Date(item.date) >= sevenDaysAgo).reduce((sum, item) => sum + Number(item.amount), 0);
             document.getElementById('spent-7-days').textContent = `₹${last7DaysSpend.toFixed(2)}`;
-
-            // 2. Average Daily Spend
             const firstDate = new Date(data[data.length - 1].date);
             const totalDays = Math.max(1, (today - firstDate) / (1000 * 60 * 60 * 24));
             const totalSpend = data.reduce((sum, item) => sum + Number(item.amount), 0);
             const avgDaily = totalSpend / totalDays;
             document.getElementById('avg-daily').textContent = `₹${avgDaily.toFixed(2)}`;
-            
-            // 3. Average Monthly Spend
             const monthlyExpenses = {};
             data.forEach(item => {
-                const monthYear = new Date(item.date).toISOString().slice(0, 7); // "YYYY-MM"
-                if (!monthlyExpenses[monthYear]) {
-                    monthlyExpenses[monthYear] = 0;
-                }
+                const monthYear = new Date(item.date).toISOString().slice(0, 7);
+                if (!monthlyExpenses[monthYear]) { monthlyExpenses[monthYear] = 0; }
                 monthlyExpenses[monthYear] += Number(item.amount);
             });
             const monthlyTotals = Object.values(monthlyExpenses);
@@ -316,14 +320,16 @@
             document.getElementById('avg-monthly').textContent = `₹${(avgMonthly || 0).toFixed(2)}`;
         }
         
+        // UPDATED to include Payment Mode column
         function displayTable(data) {
-            let tableHTML = '<table><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead><tbody>';
+            let tableHTML = '<table><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th>Mode</th></tr></thead><tbody>';
             data.forEach(row => {
                 tableHTML += `<tr>
                                 <td>${new Date(row.date).toLocaleDateString('en-IN')}</td>
                                 <td>${row.description}</td>
                                 <td>${row.category}</td>
                                 <td>₹${Number(row.amount).toFixed(2)}</td>
+                                <td>${row.paymentMode || ''}</td>
                               </tr>`;
             });
             tableHTML += '</tbody></table>';
@@ -331,7 +337,6 @@
             tableContainer.style.display = 'block';
         }
 
-        // Fetch the initial data when the page loads
         document.addEventListener('DOMContentLoaded', fetchData);
     </script>
 </body>

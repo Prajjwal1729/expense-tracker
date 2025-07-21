@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 2em;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 450px;
+            width: 100%;
+        }
+        form {
+            background: #fff;
+            padding: 2em;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #444;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5em;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"], input[type="date"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 1.5em;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            background-color: #28a745;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #status {
+            margin-top: 1em;
+            font-weight: bold;
+            text-align: center;
+            min-height: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Add New Expense</h1>
+        <form id="expenseForm">
+            <label for="date">Date:</label>
+            <input type="date" id="date" name="date" required>
+
+            <label for="description">Description:</label>
+            <input type="text" id="description" name="description" placeholder="e.g., Coffee" required>
+
+            <label for="category">Category:</label>
+            <input type="text" id="category" name="category" placeholder="e.g., Food & Drink" required>
+
+            <label for="amount">Amount ($):</label>
+            <input type="number" id="amount" name="amount" placeholder="e.g., 3.50" step="0.01" required>
+
+            <button type="submit">Add Expense</button>
+        </form>
+        <p id="status"></p>
+    </div>
+
+    <script>
+        const form = document.getElementById('expenseForm');
+        const statusMsg = document.getElementById('status');
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbxcKakacZC2t9ywuffliuoJkaSLgu15BCmpIjGzK-8NMgJgAY8R7mqyt5XLQ37_H7do/exec'; 
+
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            statusMsg.textContent = 'Adding...';
+            statusMsg.style.color = '#333';
+
+            fetch(scriptURL, { method: 'POST', body: new FormData(form)})
+                .then(response => {
+                    statusMsg.textContent = 'Expense added successfully!';
+                    statusMsg.style.color = '#28a745';
+                    console.log('Success!', response);
+                    form.reset(); // Clear the form
+                    setTimeout(() => { statusMsg.textContent = ''; }, 3000);
+                })
+                .catch(error => {
+                    statusMsg.textContent = 'Error! Could not add expense.';
+                    statusMsg.style.color = '#dc3545';
+                    console.error('Error!', error.message);
+                });
+        });
+    </script>
+
+</body>
+</html>

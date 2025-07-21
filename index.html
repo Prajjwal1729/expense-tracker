@@ -3,71 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expense Tracker</title>
+    <title>Prajjwal Personal Tracker</title>
     <style>
+        :root {
+            --bg-color: #121212;
+            --primary-surface-color: #1e1e1e;
+            --secondary-surface-color: #2a2a2a;
+            --primary-text-color: #e1e1e1;
+            --secondary-text-color: #a0a0a0;
+            --accent-color: #03dac6;
+            --accent-hover-color: #018786;
+            --error-color: #cf6679;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 2em;
-            background-color: #f4f4f9;
-            color: #333;
+            margin: 0;
+            padding: 2em;
+            background-color: var(--bg-color);
+            color: var(--primary-text-color);
             display: flex;
             justify-content: center;
         }
         .container {
-            max-width: 450px;
+            max-width: 600px;
             width: 100%;
         }
+        h1, h2 {
+            text-align: center;
+            color: var(--primary-text-color);
+        }
+        .metrics {
+            display: flex;
+            justify-content: space-around;
+            background-color: var(--primary-surface-color);
+            padding: 1.5em;
+            border-radius: 8px;
+            margin-bottom: 2em;
+            text-align: center;
+        }
+        .metric-item {
+            flex-basis: 30%;
+        }
+        .metric-item h3 {
+            margin: 0 0 0.5em 0;
+            font-size: 1em;
+            color: var(--secondary-text-color);
+        }
+        .metric-item p {
+            margin: 0;
+            font-size: 1.5em;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
         form {
-            background: #fff;
+            background: var(--primary-surface-color);
             padding: 2em;
             border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        h1 {
-            text-align: center;
-            color: #444;
+            margin-bottom: 2em;
         }
         label {
             display: block;
             margin-bottom: 0.5em;
             font-weight: bold;
-            color: #555;
+            color: var(--secondary-text-color);
         }
         input[type="text"], input[type="date"], input[type="number"] {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             margin-bottom: 1.5em;
             border-radius: 5px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--secondary-surface-color);
             box-sizing: border-box;
             font-size: 1em;
+            background-color: var(--secondary-surface-color);
+            color: var(--primary-text-color);
         }
         button {
             width: 100%;
             padding: 12px;
             border: none;
-            background-color: #28a745;
-            color: white;
+            background-color: var(--accent-color);
+            color: var(--bg-color);
             border-radius: 5px;
             cursor: pointer;
             font-size: 1.1em;
             font-weight: bold;
+            transition: background-color 0.2s;
         }
         button:hover {
-            background-color: #218838;
+            background-color: var(--accent-hover-color);
         }
         #status {
-            margin-top: 1em;
-            font-weight: bold;
             text-align: center;
+            font-weight: bold;
             min-height: 20px;
+            margin-top: 1em;
+        }
+        #view-expenses-btn {
+            background-color: transparent;
+            border: 2px solid var(--accent-color);
+            color: var(--accent-color);
+            margin-bottom: 2em;
+        }
+        #view-expenses-btn:hover {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+        }
+        #password-modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            align-items: center; justify-content: center;
+        }
+        #password-content {
+            background: var(--primary-surface-color);
+            padding: 2em;
+            border-radius: 8px;
+            text-align: center;
+        }
+        #table-container {
+            margin-top: 2em;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid var(--secondary-surface-color);
+            text-align: left;
+        }
+        th {
+            background-color: var(--secondary-surface-color);
+            color: var(--accent-color);
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Add New Expense</h1>
+        <h1>Prajjwal Personal Tracker</h1>
+
+        <h2>Dashboard</h2>
+        <div class="metrics">
+            <div class="metric-item">
+                <h3>Last 7 Days</h3>
+                <p id="spent-7-days">₹0</p>
+            </div>
+            <div class="metric-item">
+                <h3>Avg. Daily</h3>
+                <p id="avg-daily">₹0</p>
+            </div>
+            <div class="metric-item">
+                <h3>Avg. Monthly</h3>
+                <p id="avg-monthly">₹0</p>
+            </div>
+        </div>
+
+        <h2>Add New Expense</h2>
         <form id="expenseForm">
             <label for="date">Date:</label>
             <input type="date" id="date" name="date" required>
@@ -78,39 +176,163 @@
             <label for="category">Category:</label>
             <input type="text" id="category" name="category" placeholder="e.g., Food & Drink" required>
 
-            <label for="amount">Amount ($):</label>
+            <label for="amount">Amount (₹):</label>
             <input type="number" id="amount" name="amount" placeholder="e.g., 3.50" step="0.01" required>
 
             <button type="submit">Add Expense</button>
+            <p id="status"></p>
         </form>
-        <p id="status"></p>
+
+        <button id="view-expenses-btn">View All Expenses</button>
+        <div id="table-container" style="display: none;">
+             <h2>All Expenses</h2>
+             <div id="expense-table"></div>
+        </div>
+    </div>
+
+    <div id="password-modal">
+        <div id="password-content">
+            <h3>Enter Password to View</h3>
+            <input type="password" id="password-input" placeholder="Password">
+            <button id="password-submit">Submit</button>
+            <p id="password-error" style="color: var(--error-color); min-height: 1em;"></p>
+        </div>
     </div>
 
     <script>
+        const scriptURL = 'YOUR_WEB_APP_URL'; // <-- IMPORTANT: MAKE SURE THIS IS YOUR URL
         const form = document.getElementById('expenseForm');
         const statusMsg = document.getElementById('status');
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbxcKakacZC2t9ywuffliuoJkaSLgu15BCmpIjGzK-8NMgJgAY8R7mqyt5XLQ37_H7do/exec'; 
 
+        // New Elements
+        const viewExpensesBtn = document.getElementById('view-expenses-btn');
+        const tableContainer = document.getElementById('table-container');
+        const expenseTableDiv = document.getElementById('expense-table');
+        const passwordModal = document.getElementById('password-modal');
+        const passwordInput = document.getElementById('password-input');
+        const passwordSubmitBtn = document.getElementById('password-submit');
+        const passwordError = document.getElementById('password-error');
+
+        // Store fetched data globally to avoid multiple fetches
+        let allExpensesData = [];
+
+        // --- PASSWORD PROTECTION ---
+        // Note: This is NOT high security. It just hides the data from casual viewers.
+        // The password is visible in the page's source code.
+        const correctPassword = "kirti@1729";
+
+        viewExpensesBtn.addEventListener('click', () => {
+            passwordModal.style.display = 'flex';
+        });
+
+        passwordSubmitBtn.addEventListener('click', () => {
+            if (passwordInput.value === correctPassword) {
+                passwordModal.style.display = 'none';
+                passwordInput.value = '';
+                passwordError.textContent = '';
+                displayTable(allExpensesData);
+            } else {
+                passwordError.textContent = 'Incorrect Password.';
+            }
+        });
+
+        // Close modal if user clicks outside the content
+        passwordModal.addEventListener('click', (e) => {
+            if (e.target === passwordModal) {
+                passwordModal.style.display = 'none';
+            }
+        });
+
+
+        // --- ADD NEW EXPENSE (POST DATA) ---
         form.addEventListener('submit', e => {
             e.preventDefault();
             statusMsg.textContent = 'Adding...';
-            statusMsg.style.color = '#333';
+            statusMsg.style.color = 'var(--primary-text-color)';
 
             fetch(scriptURL, { method: 'POST', body: new FormData(form)})
                 .then(response => {
                     statusMsg.textContent = 'Expense added successfully!';
-                    statusMsg.style.color = '#28a745';
-                    console.log('Success!', response);
-                    form.reset(); // Clear the form
+                    statusMsg.style.color = 'var(--accent-color)';
+                    form.reset();
+                    // Refresh data after adding a new expense
+                    fetchData();
                     setTimeout(() => { statusMsg.textContent = ''; }, 3000);
                 })
                 .catch(error => {
                     statusMsg.textContent = 'Error! Could not add expense.';
-                    statusMsg.style.color = '#dc3545';
+                    statusMsg.style.color = 'var(--error-color)';
                     console.error('Error!', error.message);
                 });
         });
-    </script>
 
+        // --- FETCH ALL DATA AND CALCULATE METRICS (GET DATA) ---
+        function fetchData() {
+            fetch(scriptURL)
+                .then(response => response.json())
+                .then(data => {
+                    // Make sure data is sorted by date, newest first
+                    data.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    allExpensesData = data;
+                    calculateMetrics(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                    document.getElementById('spent-7-days').textContent = "Error";
+                });
+        }
+        
+        function calculateMetrics(data) {
+            if (data.length === 0) return;
+
+            const today = new Date();
+            const sevenDaysAgo = new Date(today);
+            sevenDaysAgo.setDate(today.getDate() - 7);
+
+            // 1. Last 7 Days Spend
+            const last7DaysSpend = data
+                .filter(item => new Date(item.date) >= sevenDaysAgo)
+                .reduce((sum, item) => sum + Number(item.amount), 0);
+            document.getElementById('spent-7-days').textContent = `₹${last7DaysSpend.toFixed(2)}`;
+
+            // 2. Average Daily Spend
+            const firstDate = new Date(data[data.length - 1].date);
+            const totalDays = Math.max(1, (today - firstDate) / (1000 * 60 * 60 * 24));
+            const totalSpend = data.reduce((sum, item) => sum + Number(item.amount), 0);
+            const avgDaily = totalSpend / totalDays;
+            document.getElementById('avg-daily').textContent = `₹${avgDaily.toFixed(2)}`;
+            
+            // 3. Average Monthly Spend
+            const monthlyExpenses = {};
+            data.forEach(item => {
+                const monthYear = new Date(item.date).toISOString().slice(0, 7); // "YYYY-MM"
+                if (!monthlyExpenses[monthYear]) {
+                    monthlyExpenses[monthYear] = 0;
+                }
+                monthlyExpenses[monthYear] += Number(item.amount);
+            });
+            const monthlyTotals = Object.values(monthlyExpenses);
+            const avgMonthly = monthlyTotals.reduce((sum, val) => sum + val, 0) / monthlyTotals.length;
+            document.getElementById('avg-monthly').textContent = `₹${(avgMonthly || 0).toFixed(2)}`;
+        }
+        
+        function displayTable(data) {
+            let tableHTML = '<table><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead><tbody>';
+            data.forEach(row => {
+                tableHTML += `<tr>
+                                <td>${new Date(row.date).toLocaleDateString('en-IN')}</td>
+                                <td>${row.description}</td>
+                                <td>${row.category}</td>
+                                <td>₹${Number(row.amount).toFixed(2)}</td>
+                              </tr>`;
+            });
+            tableHTML += '</tbody></table>';
+            expenseTableDiv.innerHTML = tableHTML;
+            tableContainer.style.display = 'block';
+        }
+
+        // Fetch the initial data when the page loads
+        document.addEventListener('DOMContentLoaded', fetchData);
+    </script>
 </body>
 </html>

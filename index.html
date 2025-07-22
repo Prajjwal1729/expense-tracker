@@ -223,11 +223,11 @@
                     labels: labels,
                     datasets: [{
                         label: 'Expenses by Category', data: amounts,
-                        backgroundColor: ['#03DAC6', '#CF6679', '#BB86FC', '#FFDE03', '#3F51B5', '#4CAF50', '#FF9800', '#795548', '#607D8B'],
+                        backgroundColor: ['var(--accent-color)', 'var(--line-chart-color-2)', 'var(--line-chart-color-1)', '#FFDE03', '#3F51B5', '#4CAF50', '#FF9800', '#795548', '#607D8B'],
                         hoverOffset: 4
                     }]
                 },
-                options: { responsive: true, plugins: { legend: { position: 'top', labels: { color: 'var(--primary-text-color)' } } } }
+                options: { responsive: true, plugins: { legend: { position: 'top', labels: { color: 'var(--primary-text-color)', font: { size: 14 } } } } }
             });
         }
         
@@ -263,14 +263,14 @@
                     datasets: [
                         {
                             label: 'Daily Spend', data: dailyData,
-                            borderColor: 'var(--line-chart-color-1)',
-                            backgroundColor: 'var(--line-chart-color-1)',
+                            borderColor: 'var(--accent-color)',
+                            backgroundColor: 'var(--accent-color)',
                             tension: 0.1
                         },
                         {
                             label: 'Average Daily Spend', data: averageData,
-                            borderColor: 'var(--line-chart-color-2)',
-                            backgroundColor: 'var(--line-chart-color-2)',
+                            borderColor: 'var(--line-chart-color-1)',
+                            backgroundColor: 'var(--line-chart-color-1)',
                             borderDash: [5, 5], // Dashed line for average
                             pointRadius: 0 // No dots on the average line
                         }
@@ -279,10 +279,10 @@
                 options: {
                     responsive: true,
                     scales: {
-                        y: { ticks: { color: 'var(--secondary-text-color)' }, grid: { color: 'var(--secondary-surface-color)' } },
-                        x: { ticks: { color: 'var(--secondary-text-color)' }, grid: { color: 'var(--secondary-surface-color)' } }
+                        y: { ticks: { color: 'var(--primary-text-color)', font: { size: 14 } }, grid: { color: 'var(--secondary-surface-color)' } },
+                        x: { ticks: { color: 'var(--primary-text-color)', font: { size: 14 } }, grid: { color: 'var(--secondary-surface-color)' } }
                     },
-                    plugins: { legend: { labels: { color: 'var(--primary-text-color)' } } }
+                    plugins: { legend: { labels: { color: 'var(--primary-text-color)', font: { size: 14 } } } }
                 }
             });
         }

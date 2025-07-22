@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prajjwal Personal Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --bg-color: #121212;
@@ -13,7 +14,6 @@
             --secondary-text-color: #a0a0a0;
             --accent-color: #03dac6;
             --accent-hover-color: #018786;
-            --error-color: #cf6679;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -21,16 +21,27 @@
             padding: 2em;
             background-color: var(--bg-color);
             color: var(--primary-text-color);
-            display: flex;
-            justify-content: center;
-        }
-        .container {
-            max-width: 600px;
-            width: 100%;
         }
         h1, h2 {
             text-align: center;
             color: var(--primary-text-color);
+            margin-top: 0;
+        }
+        /* NEW: Main Layout for side-by-side view */
+        .main-layout {
+            display: flex;
+            gap: 2em;
+            max-width: 1200px;
+            margin: auto;
+        }
+        .left-column, .right-column {
+            flex: 1;
+        }
+        /* NEW: On mobile, stack them vertically */
+        @media (max-width: 800px) {
+            .main-layout {
+                flex-direction: column;
+            }
         }
         .metrics {
             display: flex;
@@ -40,9 +51,6 @@
             border-radius: 8px;
             margin-bottom: 2em;
             text-align: center;
-        }
-        .metric-item {
-            flex-basis: 30%;
         }
         .metric-item h3 {
             margin: 0 0 0.5em 0;
@@ -67,7 +75,7 @@
             font-weight: bold;
             color: var(--secondary-text-color);
         }
-        input[type="text"], input[type="date"], input[type="number"], select {
+        input, select {
             width: 100%;
             padding: 12px;
             margin-bottom: 1.5em;
@@ -84,196 +92,122 @@
             margin-bottom: 1.5em;
             align-items: center;
         }
-        .radio-group input[type="radio"] {
-           accent-color: var(--accent-color);
-        }
-        .radio-group label {
-            margin-bottom: 0;
-            font-weight: normal;
-        }
+        .radio-group input[type="radio"] { accent-color: var(--accent-color); }
+        .radio-group label { margin-bottom: 0; font-weight: normal; }
         button {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            background-color: var(--accent-color);
-            color: var(--bg-color);
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1.1em;
-            font-weight: bold;
-            transition: background-color 0.2s;
+            width: 100%; padding: 12px; border: none; background-color: var(--accent-color);
+            color: var(--bg-color); border-radius: 5px; cursor: pointer;
+            font-size: 1.1em; font-weight: bold; transition: background-color 0.2s;
         }
-        button:hover {
-            background-color: var(--accent-hover-color);
-        }
+        button:hover { background-color: var(--accent-hover-color); }
         #status {
-            text-align: center;
-            font-weight: bold;
-            min-height: 20px;
-            margin-top: 1em;
+            text-align: center; font-weight: bold; min-height: 20px; margin-top: 1em;
         }
-        #view-expenses-btn {
-            background-color: transparent;
-            border: 2px solid var(--accent-color);
-            color: var(--accent-color);
-            margin-bottom: 2em;
+        /* NEW: Styling for the link to look like a button */
+        .sheet-link-btn {
+            display: block; width: 100%; text-align: center;
+            background-color: transparent; border: 2px solid var(--accent-color);
+            color: var(--accent-color) !important; padding: 12px;
+            border-radius: 5px; text-decoration: none; font-weight: bold;
+            box-sizing: border-box; transition: all 0.2s;
         }
-        #view-expenses-btn:hover {
-            background-color: var(--accent-color);
-            color: var(--bg-color);
+        .sheet-link-btn:hover {
+            background-color: var(--accent-color); color: var(--bg-color) !important;
         }
-        #password-modal {
-            display: none;
-            position: fixed;
-            z-index: 1; left: 0; top: 0;
-            width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.7);
-            align-items: center; justify-content: center;
-        }
-        #password-content {
-            background: var(--primary-surface-color);
+        .chart-container {
+            background-color: var(--primary-surface-color);
             padding: 2em;
             border-radius: 8px;
-            text-align: center;
-        }
-        #table-container {
-            margin-top: 2em; max-height: 500px; overflow-y: auto;
-        }
-        table {
-            width: 100%; border-collapse: collapse;
-        }
-        th, td {
-            padding: 12px;
-            border: 1px solid var(--secondary-surface-color);
-            text-align: left;
-        }
-        th {
-            background-color: var(--secondary-surface-color);
-            color: var(--accent-color);
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
+    <div class="main-container">
         <h1>Prajjwal Personal Tracker</h1>
+        
+        <div class="main-layout">
+            <div class="left-column">
+                <h2>Dashboard</h2>
+                <div class="metrics">
+                    <div class="metric-item"><h3>Last 7 Days</h3><p id="spent-7-days">₹0</p></div>
+                    <div class="metric-item"><h3>Avg. Daily</h3><p id="avg-daily">₹0</p></div>
+                    <div class="metric-item"><h3>Avg. Monthly</h3><p id="avg-monthly">₹0</p></div>
+                </div>
 
-        <h2>Dashboard</h2>
-        <div class="metrics">
-            <div class="metric-item">
-                <h3>Last 7 Days</h3>
-                <p id="spent-7-days">₹0</p>
+                <h2>Add New Expense</h2>
+                <form id="expenseForm">
+                    <label for="date">Date:</label>
+                    <input type="date" id="date" name="date" required>
+                    <label for="description">Description:</label>
+                    <input type="text" id="description" name="description" placeholder="e.g., Lunch with colleagues" required>
+                    <label for="category">Category:</label>
+                    <select id="category" name="category" required>
+                        <option value="" disabled selected>-- Select a Category --</option>
+                        <option value="Food & Dining">Food & Dining</option>
+                        <option value="Transportation">Transportation</option>
+                        <option value="Home & Utilities">Home & Utilities</option>
+                        <option value="Shopping & Personal Care">Shopping & Personal Care</option>
+                        <option value="Health & Wellness">Health & Wellness</option>
+                        <option value="Entertainment & Subscriptions">Entertainment & Subscriptions</option>
+                        <option value="Bills & EMIs">Bills & EMIs</option>
+                        <option value="Investment & Savings">Investment & Savings</option>
+                        <option value="Miscellaneous / Other">Miscellaneous / Other</option>
+                    </select>
+                    <label for="amount">Amount (₹):</label>
+                    <input type="number" id="amount" name="amount" placeholder="e.g., 250.00" step="0.01" required>
+                    <label>Payment Mode:</label>
+                    <div class="radio-group">
+                        <input type="radio" id="online" name="paymentMode" value="Online" checked required>
+                        <label for="online">Online</label>
+                        <input type="radio" id="cash" name="paymentMode" value="Cash">
+                        <label for="cash">Cash</label>
+                    </div>
+                    <button type="submit">Add Expense</button>
+                    <p id="status"></p>
+                </form>
             </div>
-            <div class="metric-item">
-                <h3>Avg. Daily</h3>
-                <p id="avg-daily">₹0</p>
+
+            <div class="right-column">
+                <h2>Category Breakdown</h2>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+                <br><br>
+                <a href="#" id="sheet-link" class="sheet-link-btn" target="_blank">View All Expenses in Google Sheet</a>
             </div>
-            <div class="metric-item">
-                <h3>Avg. Monthly</h3>
-                <p id="avg-monthly">₹0</p>
-            </div>
-        </div>
-
-        <h2>Add New Expense</h2>
-        <form id="expenseForm">
-            <label for="date">Date:</label>
-            <input type="date" id="date" name="date" required>
-
-            <label for="description">Description:</label>
-            <input type="text" id="description" name="description" placeholder="e.g., Lunch with colleagues" required>
-
-            <label for="category">Category:</label>
-            <select id="category" name="category" required>
-                <option value="" disabled selected>-- Select a Category --</option>
-                <option value="Food & Dining">Food & Dining</option>
-                <option value="Transportation">Transportation</option>
-                <option value="Home & Utilities">Home & Utilities</option>
-                <option value="Shopping & Personal Care">Shopping & Personal Care</option>
-                <option value="Health & Wellness">Health & Wellness</option>
-                <option value="Entertainment & Subscriptions">Entertainment & Subscriptions</option>
-                <option value="Bills & EMIs">Bills & EMIs</option>
-                <option value="Investment & Savings">Investment & Savings</option>
-                <option value="Miscellaneous / Other">Miscellaneous / Other</option>
-            </select>
-
-            <label for="amount">Amount (₹):</label>
-            <input type="number" id="amount" name="amount" placeholder="e.g., 250.00" step="0.01" required>
-
-            <label>Payment Mode:</label>
-            <div class="radio-group">
-                <input type="radio" id="online" name="paymentMode" value="Online" checked required>
-                <label for="online">Online</label>
-                <input type="radio" id="cash" name="paymentMode" value="Cash">
-                <label for="cash">Cash</label>
-            </div>
-            
-            <button type="submit">Add Expense</button>
-            <p id="status"></p>
-        </form>
-
-        <button id="view-expenses-btn">View All Expenses</button>
-        <div id="table-container" style="display: none;">
-             <h2>All Expenses</h2>
-             <div id="expense-table"></div>
-        </div>
-    </div>
-
-    <div id="password-modal">
-        <div id="password-content">
-            <h3>Enter Password to View</h3>
-            <input type="password" id="password-input" placeholder="Password">
-            <button id="password-submit">Submit</button>
-            <p id="password-error" style="color: var(--error-color); min-height: 1em;"></p>
         </div>
     </div>
 
     <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbxcKakacZC2t9ywuffliuoJkaSLgu15BCmpIjGzK-8NMgJgAY8R7mqyt5XLQ37_H7do/exec'; // <-- IMPORTANT: MAKE SURE THIS IS YOUR URL
-        // ... (rest of the script is the same, but included for completeness)
+        // --- CONFIGURATION ---
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbxcKakacZC2t9ywuffliuoJkaSLgu15BCmpIjGzK-8NMgJgAY8R7mqyt5XLQ37_H7do/exec';
+        const sheetURL = 'https://docs.google.com/spreadsheets/d/13q9G2xVmwsM02FyVXO0ZykVS3BMCTQrR3w9ddQ4AIU0/edit?gid=0#gid=0'; // <-- IMPORTANT: PASTE YOUR SHEET URL HERE
+
+        // --- PAGE ELEMENTS ---
         const form = document.getElementById('expenseForm');
         const statusMsg = document.getElementById('status');
-        const viewExpensesBtn = document.getElementById('view-expenses-btn');
-        const tableContainer = document.getElementById('table-container');
-        const expenseTableDiv = document.getElementById('expense-table');
-        const passwordModal = document.getElementById('password-modal');
-        const passwordInput = document.getElementById('password-input');
-        const passwordSubmitBtn = document.getElementById('password-submit');
-        const passwordError = document.getElementById('password-error');
+        document.getElementById('sheet-link').href = sheetURL;
+
+        // --- GLOBAL VARIABLES ---
         let allExpensesData = [];
-        const correctPassword = "kirti@1729";
+        let categoryChart; // To hold the chart instance
 
-        viewExpensesBtn.addEventListener('click', () => {
-            passwordModal.style.display = 'flex';
-        });
+        // --- EVENT LISTENERS ---
+        form.addEventListener('submit', handleFormSubmit);
+        document.addEventListener('DOMContentLoaded', fetchData);
 
-        passwordSubmitBtn.addEventListener('click', () => {
-            if (passwordInput.value === correctPassword) {
-                passwordModal.style.display = 'none';
-                passwordInput.value = '';
-                passwordError.textContent = '';
-                displayTable(allExpensesData);
-            } else {
-                passwordError.textContent = 'Incorrect Password.';
-            }
-        });
-        
-        passwordModal.addEventListener('click', (e) => {
-            if (e.target === passwordModal) {
-                passwordModal.style.display = 'none';
-            }
-        });
-
-        form.addEventListener('submit', e => {
+        // --- FUNCTIONS ---
+        function handleFormSubmit(e) {
             e.preventDefault();
             statusMsg.textContent = 'Adding...';
             statusMsg.style.color = 'var(--primary-text-color)';
-
             fetch(scriptURL, { method: 'POST', body: new FormData(form)})
                 .then(response => {
                     statusMsg.textContent = 'Expense added successfully!';
                     statusMsg.style.color = 'var(--accent-color)';
                     form.reset();
-                    fetchData();
+                    fetchData(); // Refresh data after adding
                     setTimeout(() => { statusMsg.textContent = ''; }, 3000);
                 })
                 .catch(error => {
@@ -281,20 +215,17 @@
                     statusMsg.style.color = 'var(--error-color)';
                     console.error('Error!', error.message);
                 });
-        });
+        }
 
         function fetchData() {
             fetch(scriptURL)
                 .then(response => response.json())
                 .then(data => {
-                    data.sort((a, b) => new Date(b.date) - new Date(a.date));
-                    allExpensesData = data;
-                    calculateMetrics(data);
+                    allExpensesData = data.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    calculateMetrics(allExpensesData);
+                    renderCategoryChart(allExpensesData); // NEW: Render the chart
                 })
-                .catch(error => {
-                    console.error('Error fetching data:', error);
-                    document.getElementById('spent-7-days').textContent = "Error";
-                });
+                .catch(error => console.error('Error fetching data:', error));
         }
         
         function calculateMetrics(data) {
@@ -319,25 +250,56 @@
             const avgMonthly = monthlyTotals.reduce((sum, val) => sum + val, 0) / monthlyTotals.length;
             document.getElementById('avg-monthly').textContent = `₹${(avgMonthly || 0).toFixed(2)}`;
         }
-        
-        // UPDATED to include Payment Mode column
-        function displayTable(data) {
-            let tableHTML = '<table><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th>Mode</th></tr></thead><tbody>';
-            data.forEach(row => {
-                tableHTML += `<tr>
-                                <td>${new Date(row.date).toLocaleDateString('en-IN')}</td>
-                                <td>${row.description}</td>
-                                <td>${row.category}</td>
-                                <td>₹${Number(row.amount).toFixed(2)}</td>
-                                <td>${row.paymentMode || ''}</td>
-                              </tr>`;
-            });
-            tableHTML += '</tbody></table>';
-            expenseTableDiv.innerHTML = tableHTML;
-            tableContainer.style.display = 'block';
-        }
 
-        document.addEventListener('DOMContentLoaded', fetchData);
+        // --- NEW: CHART FUNCTION ---
+        function renderCategoryChart(data) {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            
+            // Process data for the chart
+            const categoryTotals = {};
+            data.forEach(item => {
+                if (!categoryTotals[item.category]) {
+                    categoryTotals[item.category] = 0;
+                }
+                categoryTotals[item.category] += Number(item.amount);
+            });
+
+            const labels = Object.keys(categoryTotals);
+            const amounts = Object.values(categoryTotals);
+
+            // Destroy the old chart if it exists, before creating a new one
+            if (categoryChart) {
+                categoryChart.destroy();
+            }
+
+            // Create the new chart
+            categoryChart = new Chart(ctx, {
+                type: 'doughnut', // or 'pie'
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Expenses by Category',
+                        data: amounts,
+                        backgroundColor: [
+                            '#03DAC6', '#CF6679', '#BB86FC', '#FFDE03', 
+                            '#3F51B5', '#4CAF50', '#FF9800', '#795548', '#607D8B'
+                        ],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: 'var(--primary-text-color)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>

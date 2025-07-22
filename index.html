@@ -14,84 +14,47 @@
             --secondary-text-color: #a0a0a0;
             --accent-color: #03dac6;
             --accent-hover-color: #018786;
+            --line-chart-color-1: #BB86FC;
+            --line-chart-color-2: #CF6679;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 2em;
-            background-color: var(--bg-color);
+            margin: 0; padding: 2em; background-color: var(--bg-color);
             color: var(--primary-text-color);
         }
         h1, h2 {
-            text-align: center;
-            color: var(--primary-text-color);
-            margin-top: 0;
+            text-align: center; color: var(--primary-text-color); margin-top: 0;
         }
-        /* NEW: Main Layout for side-by-side view */
         .main-layout {
-            display: flex;
-            gap: 2em;
-            max-width: 1200px;
-            margin: auto;
+            display: flex; gap: 2em; max-width: 1200px; margin: auto;
         }
         .left-column, .right-column {
-            flex: 1;
+            flex: 1; display: flex; flex-direction: column; gap: 2em;
         }
-        /* NEW: On mobile, stack them vertically */
-        @media (max-width: 800px) {
-            .main-layout {
-                flex-direction: column;
-            }
+        @media (max-width: 900px) {
+            .main-layout { flex-direction: column; }
         }
         .metrics {
-            display: flex;
-            justify-content: space-around;
-            background-color: var(--primary-surface-color);
-            padding: 1.5em;
-            border-radius: 8px;
-            margin-bottom: 2em;
-            text-align: center;
+            display: flex; justify-content: space-around; background-color: var(--primary-surface-color);
+            padding: 1.5em; border-radius: 8px; text-align: center;
         }
-        .metric-item h3 {
-            margin: 0 0 0.5em 0;
-            font-size: 1em;
-            color: var(--secondary-text-color);
-        }
-        .metric-item p {
-            margin: 0;
-            font-size: 1.5em;
-            color: var(--accent-color);
-            font-weight: bold;
-        }
+        .metric-item h3 { margin: 0 0 0.5em 0; font-size: 1em; color: var(--secondary-text-color); }
+        .metric-item p { margin: 0; font-size: 1.5em; color: var(--accent-color); font-weight: bold; }
         form {
-            background: var(--primary-surface-color);
-            padding: 2em;
-            border-radius: 8px;
-            margin-bottom: 2em;
+            background: var(--primary-surface-color); padding: 2em; border-radius: 8px;
         }
-        label {
-            display: block;
-            margin-bottom: 0.5em;
-            font-weight: bold;
-            color: var(--secondary-text-color);
-        }
+        label { display: block; margin-bottom: 0.5em; font-weight: bold; color: var(--secondary-text-color); }
         input, select {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 1.5em;
-            border-radius: 5px;
-            border: 1px solid var(--secondary-surface-color);
-            box-sizing: border-box;
-            font-size: 1em;
-            background-color: var(--secondary-surface-color);
+            width: 100%; padding: 12px; margin-bottom: 1.5em; border-radius: 5px;
+            border: 1px solid var(--secondary-surface-color); box-sizing: border-box; font-size: 1em;
+            background-color: var(--secondary-surface-color); color: var(--primary-text-color);
+        }
+        /* --- CSS FIX FOR DROPDOWN OPTIONS --- */
+        select option {
+            background: var(--primary-surface-color);
             color: var(--primary-text-color);
         }
-        .radio-group {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 1.5em;
-            align-items: center;
-        }
+        .radio-group { display: flex; gap: 20px; margin-bottom: 1.5em; align-items: center; }
         .radio-group input[type="radio"] { accent-color: var(--accent-color); }
         .radio-group label { margin-bottom: 0; font-weight: normal; }
         button {
@@ -100,24 +63,16 @@
             font-size: 1.1em; font-weight: bold; transition: background-color 0.2s;
         }
         button:hover { background-color: var(--accent-hover-color); }
-        #status {
-            text-align: center; font-weight: bold; min-height: 20px; margin-top: 1em;
-        }
-        /* NEW: Styling for the link to look like a button */
+        #status { text-align: center; font-weight: bold; min-height: 20px; margin-top: 1em; }
         .sheet-link-btn {
-            display: block; width: 100%; text-align: center;
-            background-color: transparent; border: 2px solid var(--accent-color);
-            color: var(--accent-color) !important; padding: 12px;
+            display: block; width: 100%; text-align: center; background-color: transparent;
+            border: 2px solid var(--accent-color); color: var(--accent-color) !important; padding: 12px;
             border-radius: 5px; text-decoration: none; font-weight: bold;
-            box-sizing: border-box; transition: all 0.2s;
+            box-sizing: border-box; transition: all 0.2s; margin-top: auto; /* Pushes button to bottom */
         }
-        .sheet-link-btn:hover {
-            background-color: var(--accent-color); color: var(--bg-color) !important;
-        }
+        .sheet-link-btn:hover { background-color: var(--accent-color); color: var(--bg-color) !important; }
         .chart-container {
-            background-color: var(--primary-surface-color);
-            padding: 2em;
-            border-radius: 8px;
+            background-color: var(--primary-surface-color); padding: 1.5em; border-radius: 8px;
         }
     </style>
 </head>
@@ -128,15 +83,17 @@
         
         <div class="main-layout">
             <div class="left-column">
-                <h2>Dashboard</h2>
-                <div class="metrics">
-                    <div class="metric-item"><h3>Last 7 Days</h3><p id="spent-7-days">₹0</p></div>
-                    <div class="metric-item"><h3>Avg. Daily</h3><p id="avg-daily">₹0</p></div>
-                    <div class="metric-item"><h3>Avg. Monthly</h3><p id="avg-monthly">₹0</p></div>
+                <div class="dashboard-container">
+                    <h2>Dashboard</h2>
+                    <div class="metrics">
+                        <div class="metric-item"><h3>Last 7 Days</h3><p id="spent-7-days">₹0</p></div>
+                        <div class="metric-item"><h3>Avg. Daily</h3><p id="avg-daily">₹0</p></div>
+                        <div class="metric-item"><h3>Avg. Monthly</h3><p id="avg-monthly">₹0</p></div>
+                    </div>
                 </div>
 
-                <h2>Add New Expense</h2>
                 <form id="expenseForm">
+                    <h2>Add New Expense</h2>
                     <label for="date">Date:</label>
                     <input type="date" id="date" name="date" required>
                     <label for="description">Description:</label>
@@ -169,35 +126,33 @@
             </div>
 
             <div class="right-column">
-                <h2>Category Breakdown</h2>
                 <div class="chart-container">
+                    <h2>Category Breakdown</h2>
                     <canvas id="categoryChart"></canvas>
                 </div>
-                <br><br>
+                <div class="chart-container">
+                    <h2>Daily vs. Average Spend (Last 30 Days)</h2>
+                    <canvas id="dailyAverageChart"></canvas>
+                </div>
                 <a href="#" id="sheet-link" class="sheet-link-btn" target="_blank">View All Expenses in Google Sheet</a>
             </div>
         </div>
     </div>
 
     <script>
-        // --- CONFIGURATION ---
         const scriptURL = 'https://script.google.com/macros/s/AKfycbxcKakacZC2t9ywuffliuoJkaSLgu15BCmpIjGzK-8NMgJgAY8R7mqyt5XLQ37_H7do/exec';
         const sheetURL = 'https://docs.google.com/spreadsheets/d/13q9G2xVmwsM02FyVXO0ZykVS3BMCTQrR3w9ddQ4AIU0/edit?gid=0#gid=0'; // <-- IMPORTANT: PASTE YOUR SHEET URL HERE
 
-        // --- PAGE ELEMENTS ---
         const form = document.getElementById('expenseForm');
         const statusMsg = document.getElementById('status');
         document.getElementById('sheet-link').href = sheetURL;
 
-        // --- GLOBAL VARIABLES ---
         let allExpensesData = [];
-        let categoryChart; // To hold the chart instance
+        let categoryChart, dailyAverageChart;
 
-        // --- EVENT LISTENERS ---
         form.addEventListener('submit', handleFormSubmit);
         document.addEventListener('DOMContentLoaded', fetchData);
 
-        // --- FUNCTIONS ---
         function handleFormSubmit(e) {
             e.preventDefault();
             statusMsg.textContent = 'Adding...';
@@ -207,12 +162,11 @@
                     statusMsg.textContent = 'Expense added successfully!';
                     statusMsg.style.color = 'var(--accent-color)';
                     form.reset();
-                    fetchData(); // Refresh data after adding
+                    fetchData();
                     setTimeout(() => { statusMsg.textContent = ''; }, 3000);
                 })
                 .catch(error => {
                     statusMsg.textContent = 'Error! Could not add expense.';
-                    statusMsg.style.color = 'var(--error-color)';
                     console.error('Error!', error.message);
                 });
         }
@@ -222,14 +176,15 @@
                 .then(response => response.json())
                 .then(data => {
                     allExpensesData = data.sort((a, b) => new Date(b.date) - new Date(a.date));
-                    calculateMetrics(allExpensesData);
-                    renderCategoryChart(allExpensesData); // NEW: Render the chart
+                    const avgDaily = calculateMetrics(allExpensesData);
+                    renderCategoryChart(allExpensesData);
+                    renderDailyVsAverageChart(allExpensesData, avgDaily); // Call new chart function
                 })
                 .catch(error => console.error('Error fetching data:', error));
         }
         
         function calculateMetrics(data) {
-            if (data.length === 0) return;
+            if (data.length === 0) return 0;
             const today = new Date();
             const sevenDaysAgo = new Date();
             sevenDaysAgo.setDate(today.getDate() - 7);
@@ -249,54 +204,85 @@
             const monthlyTotals = Object.values(monthlyExpenses);
             const avgMonthly = monthlyTotals.reduce((sum, val) => sum + val, 0) / monthlyTotals.length;
             document.getElementById('avg-monthly').textContent = `₹${(avgMonthly || 0).toFixed(2)}`;
+            return avgDaily; // Return avgDaily for use in the new chart
         }
 
-        // --- NEW: CHART FUNCTION ---
         function renderCategoryChart(data) {
             const ctx = document.getElementById('categoryChart').getContext('2d');
-            
-            // Process data for the chart
             const categoryTotals = {};
             data.forEach(item => {
-                if (!categoryTotals[item.category]) {
-                    categoryTotals[item.category] = 0;
-                }
+                if (!categoryTotals[item.category]) { categoryTotals[item.category] = 0; }
                 categoryTotals[item.category] += Number(item.amount);
             });
-
             const labels = Object.keys(categoryTotals);
             const amounts = Object.values(categoryTotals);
-
-            // Destroy the old chart if it exists, before creating a new one
-            if (categoryChart) {
-                categoryChart.destroy();
-            }
-
-            // Create the new chart
+            if (categoryChart) { categoryChart.destroy(); }
             categoryChart = new Chart(ctx, {
-                type: 'doughnut', // or 'pie'
+                type: 'doughnut',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Expenses by Category',
-                        data: amounts,
-                        backgroundColor: [
-                            '#03DAC6', '#CF6679', '#BB86FC', '#FFDE03', 
-                            '#3F51B5', '#4CAF50', '#FF9800', '#795548', '#607D8B'
-                        ],
+                        label: 'Expenses by Category', data: amounts,
+                        backgroundColor: ['#03DAC6', '#CF6679', '#BB86FC', '#FFDE03', '#3F51B5', '#4CAF50', '#FF9800', '#795548', '#607D8B'],
                         hoverOffset: 4
                     }]
                 },
+                options: { responsive: true, plugins: { legend: { position: 'top', labels: { color: 'var(--primary-text-color)' } } } }
+            });
+        }
+        
+        // --- NEW: Daily vs Average Chart Function ---
+        function renderDailyVsAverageChart(data, avgDaily) {
+            const ctx = document.getElementById('dailyAverageChart').getContext('2d');
+            
+            // Process data: get daily totals for the last 30 days
+            const dailyTotals = {};
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+            data.forEach(item => {
+                const itemDate = new Date(item.date);
+                if (itemDate >= thirtyDaysAgo) {
+                    const dateString = itemDate.toISOString().slice(0, 10); // YYYY-MM-DD
+                    if (!dailyTotals[dateString]) { dailyTotals[dateString] = 0; }
+                    dailyTotals[dateString] += Number(item.amount);
+                }
+            });
+
+            const sortedDates = Object.keys(dailyTotals).sort();
+            const labels = sortedDates.map(date => new Date(date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }));
+            const dailyData = sortedDates.map(date => dailyTotals[date]);
+            const averageData = Array(labels.length).fill(avgDaily); // An array with the average value repeated
+
+            if (dailyAverageChart) { dailyAverageChart.destroy(); }
+
+            dailyAverageChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Daily Spend', data: dailyData,
+                            borderColor: 'var(--line-chart-color-1)',
+                            backgroundColor: 'var(--line-chart-color-1)',
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Average Daily Spend', data: averageData,
+                            borderColor: 'var(--line-chart-color-2)',
+                            backgroundColor: 'var(--line-chart-color-2)',
+                            borderDash: [5, 5], // Dashed line for average
+                            pointRadius: 0 // No dots on the average line
+                        }
+                    ]
+                },
                 options: {
                     responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: {
-                                color: 'var(--primary-text-color)'
-                            }
-                        }
-                    }
+                    scales: {
+                        y: { ticks: { color: 'var(--secondary-text-color)' }, grid: { color: 'var(--secondary-surface-color)' } },
+                        x: { ticks: { color: 'var(--secondary-text-color)' }, grid: { color: 'var(--secondary-surface-color)' } }
+                    },
+                    plugins: { legend: { labels: { color: 'var(--primary-text-color)' } } }
                 }
             });
         }

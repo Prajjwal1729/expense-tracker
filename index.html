@@ -16,6 +16,8 @@
       --accent-hover-color: #018786;
       --line-chart-color-1: #BB86FC;
       --line-chart-color-2: #CF6679;
+      --positive-balance-color: #03DAC6;
+      --negative-balance-color: #CF6679;
     }
     body {
       font-family: system-ui, sans-serif;
@@ -47,6 +49,8 @@
       padding: 1.5em;
       border-radius: 8px;
       text-align: center;
+      flex-wrap: wrap; /* Added for better wrapping on small screens */
+      gap: 1em; /* Added for spacing */
     }
     .metric-item h3 {
       margin: 0 0 0.5em 0;
@@ -109,7 +113,7 @@
     button:hover {
       background-color: var(--accent-hover-color);
     }
-    #status {
+    #status, #balanceStatus {
       text-align: center;
       font-weight: bold;
       min-height: 20px;
@@ -138,6 +142,12 @@
       padding: 1.5em;
       border-radius: 8px;
     }
+    /* NEW: Styles for the balance settings form */
+    .balance-settings-container {
+      background: var(--primary-surface-color);
+      padding: 2em;
+      border-radius: 8px;
+    }
   </style>
 </head>
 <body>
@@ -149,6 +159,11 @@
         <div class="dashboard-container">
           <h2>Dashboard</h2>
           <div class="metrics">
+            <div class="metric-item"><h3>Total Spent</h3><p id="total-spent">₹0</p></div>
+            <div class="metric-item"><h3>Bank Balance</h3><p id="bank-balance">₹0</p></div>
+            <div class="metric-item"><h3>Cash Balance</h3><p id="cash-balance">₹0</p></div>
+          </div>
+          <div class="metrics" style="margin-top: 1em;">
             <div class="metric-item"><h3>Last 7 Days</h3><p id="spent-7-days">₹0</p></div>
             <div class="metric-item"><h3>Avg. Daily</h3><p id="avg-daily">₹0</p></div>
             <div class="metric-item"><h3>Avg. Monthly</h3><p id="avg-monthly">₹0</p></div>
@@ -191,6 +206,20 @@
           <button type="submit">Add Expense</button>
           <p id="status"></p>
         </form>
+
+        <div class="balance-settings-container">
+          <form id="balanceSettingsForm">
+            <h2>Set Opening Balances</h2>
+            <label for="openingBank">Opening Bank Balance (₹):</label>
+            <input type="number" id="openingBank" name="openingBank" placeholder="e.g., 50000">
+
+            <label for="openingCash">Opening Cash Balance (₹):</label>
+            <input type="number" id="openingCash" name="openingCash" placeholder="e.g., 5000">
+
+            <button type="submit">Save Balances</button>
+            <p id="balanceStatus"></p>
+          </form>
+        </div>
       </div>
 
       <div class="right-column">
@@ -213,24 +242,35 @@
 
     const form = document.getElementById('expenseForm');
     const statusMsg = document.getElementById('status');
+    // NEW: Get elements for balance form
+    const balanceForm = document.getElementById('balanceSettingsForm');
+    const balanceStatusMsg = document.getElementById('balanceStatus');
+
     document.getElementById('sheet-link').href = sheetURL;
 
     let allExpensesData = [];
     let categoryChart, dailyAverageChart;
 
+    // --- EVENT LISTENERS ---
+    document.addEventListener('DOMContentLoaded', () => {
+        loadOpeningBalances();
+        fetchData();
+    });
     form.addEventListener('submit', handleFormSubmit);
-    document.addEventListener('DOMContentLoaded', fetchData);
+    balanceForm.addEventListener('submit', handleBalanceFormSubmit);
 
+    // --- FORM HANDLERS ---
     function handleFormSubmit(e) {
       e.preventDefault();
       statusMsg.textContent = 'Adding...';
-            statusMsg.style.color = 'var(--primary-text-color)';
+      statusMsg.style.color = 'var(--primary-text-color)';
       fetch(scriptURL, { method: 'POST', body: new FormData(form) })
         .then(response => {
           statusMsg.textContent = 'Expense added successfully!';
           statusMsg.style.color = 'var(--accent-color)';
           form.reset();
-          fetchData();
+          document.getElementById('date').valueAsDate = new Date(); // Reset date to today
+          fetchData(); // Refetch all data to update dashboard
           setTimeout(() => { statusMsg.textContent = ''; }, 3000);
         })
         .catch(error => {
@@ -239,45 +279,107 @@
         });
     }
 
+    // NEW: Handle saving opening balances
+    function handleBalanceFormSubmit(e) {
+        e.preventDefault();
+        const openingBank = document.getElementById('openingBank').value;
+        const openingCash = document.getElementById('openingCash').value;
+
+        localStorage.setItem('openingBankBalance', openingBank);
+        localStorage.setItem('openingCashBalance', openingCash);
+
+        balanceStatusMsg.textContent = 'Balances saved successfully!';
+        balanceStatusMsg.style.color = 'var(--accent-color)';
+        
+        // Recalculate everything with the new balances
+        processDataAndUpdateUI(allExpensesData);
+
+        setTimeout(() => { balanceStatusMsg.textContent = ''; }, 3000);
+    }
+    
+    // --- DATA FETCHING & PROCESSING ---
     function fetchData() {
       fetch(scriptURL)
         .then(response => response.json())
         .then(data => {
           allExpensesData = data.sort((a, b) => new Date(b.date) - new Date(a.date));
-          const avgDaily = calculateMetrics(allExpensesData);
-          renderCategoryChart(allExpensesData);
-          renderDailyVsAverageChart(allExpensesData, avgDaily);
+          processDataAndUpdateUI(allExpensesData);
         })
         .catch(error => console.error('Error fetching data:', error));
     }
+    
+    // NEW: This function now handles ALL calculations and UI updates
+    function processDataAndUpdateUI(data) {
+        if (!data || data.length === 0) {
+            console.log("No data to process.");
+            return;
+        }
 
-    function calculateMetrics(data) {
-      if (data.length === 0) return 0;
-      const today = new Date();
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(today.getDate() - 7);
-      const last7DaysSpend = data.filter(item => new Date(item.date) >= sevenDaysAgo)
-        .reduce((sum, item) => sum + Number(item.amount), 0);
-      document.getElementById('spent-7-days').textContent = `₹${last7DaysSpend.toFixed(2)}`;
+        // --- Balance Calculations ---
+        const openingBank = parseFloat(localStorage.getItem('openingBankBalance')) || 0;
+        const openingCash = parseFloat(localStorage.getItem('openingCashBalance')) || 0;
 
-      const firstDate = new Date(data[data.length - 1].date);
-      const totalDays = Math.max(1, (today - firstDate) / (1000 * 60 * 60 * 24));
-      const totalSpend = data.reduce((sum, item) => sum + Number(item.amount), 0);
-      const avgDaily = totalSpend / totalDays;
-      document.getElementById('avg-daily').textContent = `₹${avgDaily.toFixed(2)}`;
+        const totalSpend = data.reduce((sum, item) => sum + Number(item.amount), 0);
+        const totalOnlineSpend = data.filter(item => item.paymentMode === 'Online').reduce((sum, item) => sum + Number(item.amount), 0);
+        const totalCashSpend = data.filter(item => item.paymentMode === 'Cash').reduce((sum, item) => sum + Number(item.amount), 0);
+        
+        const remainingBank = openingBank - totalOnlineSpend;
+        const remainingCash = openingCash - totalCashSpend;
+        
+        document.getElementById('total-spent').textContent = `₹${totalSpend.toFixed(2)}`;
+        const bankBalanceEl = document.getElementById('bank-balance');
+        const cashBalanceEl = document.getElementById('cash-balance');
+        
+        bankBalanceEl.textContent = `₹${remainingBank.toFixed(2)}`;
+        bankBalanceEl.style.color = remainingBank < 0 ? 'var(--negative-balance-color)' : 'var(--positive-balance-color)';
+        
+        cashBalanceEl.textContent = `₹${remainingCash.toFixed(2)}`;
+        cashBalanceEl.style.color = remainingCash < 0 ? 'var(--negative-balance-color)' : 'var(--positive-balance-color)';
+        
 
-      const monthlyExpenses = {};
-      data.forEach(item => {
-        const monthYear = new Date(item.date).toISOString().slice(0, 7);
-        if (!monthlyExpenses[monthYear]) monthlyExpenses[monthYear] = 0;
-        monthlyExpenses[monthYear] += Number(item.amount);
-      });
-      const monthlyTotals = Object.values(monthlyExpenses);
-      const avgMonthly = monthlyTotals.reduce((sum, val) => sum + val, 0) / monthlyTotals.length;
-      document.getElementById('avg-monthly').textContent = `₹${(avgMonthly || 0).toFixed(2)}`;
-      return avgDaily;
+        // --- Other Metrics Calculations ---
+        const today = new Date();
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(today.getDate() - 7);
+        const last7DaysSpend = data.filter(item => new Date(item.date) >= sevenDaysAgo)
+            .reduce((sum, item) => sum + Number(item.amount), 0);
+        document.getElementById('spent-7-days').textContent = `₹${last7DaysSpend.toFixed(2)}`;
+
+        const firstDate = new Date(data[data.length - 1].date);
+        const totalDays = Math.max(1, (today - firstDate) / (1000 * 60 * 60 * 24));
+        const avgDaily = totalSpend / totalDays;
+        document.getElementById('avg-daily').textContent = `₹${avgDaily.toFixed(2)}`;
+        
+        const monthlyExpenses = {};
+        data.forEach(item => {
+            const monthYear = new Date(item.date).toISOString().slice(0, 7);
+            if (!monthlyExpenses[monthYear]) monthlyExpenses[monthYear] = 0;
+            monthlyExpenses[monthYear] += Number(item.amount);
+        });
+        const monthlyTotals = Object.values(monthlyExpenses);
+        const avgMonthly = monthlyTotals.length > 0 ? monthlyTotals.reduce((sum, val) => sum + val, 0) / monthlyTotals.length : 0;
+        document.getElementById('avg-monthly').textContent = `₹${avgMonthly.toFixed(2)}`;
+        
+        // --- Chart Rendering ---
+        renderCategoryChart(data);
+        renderDailyVsAverageChart(data, avgDaily);
+    }
+    
+    // NEW: Function to load saved balances into the form
+    function loadOpeningBalances() {
+        const savedBank = localStorage.getItem('openingBankBalance');
+        const savedCash = localStorage.getItem('openingCashBalance');
+
+        if (savedBank) {
+            document.getElementById('openingBank').value = savedBank;
+        }
+        if (savedCash) {
+            document.getElementById('openingCash').value = savedCash;
+        }
+        document.getElementById('date').valueAsDate = new Date(); // Set date to today on load
     }
 
+    // --- CHART RENDERING FUNCTIONS (Largely Unchanged) ---
     function renderCategoryChart(data) {
       const ctx = document.getElementById('categoryChart').getContext('2d');
       const categoryTotals = {};
@@ -287,8 +389,7 @@
       });
       const labels = Object.keys(categoryTotals);
       const amounts = Object.values(categoryTotals);
-      const primaryTextColor = getComputedStyle(document.documentElement)
-        .getPropertyValue('--primary-text-color').trim();
+      const primaryTextColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-text-color').trim();
 
       if (categoryChart) categoryChart.destroy();
 
@@ -299,24 +400,11 @@
           datasets: [{
             label: 'Expenses by Category',
             data: amounts,
-            backgroundColor: [
-              '#03DAC6', '#CF6679', '#BB86FC', '#FFDE03', '#3F51B5',
-              '#4CAF50', '#FF9800', '#795548', '#607D8B'
-            ],
+            backgroundColor: ['#03DAC6', '#CF6679', '#BB86FC', '#FFDE03', '#3F51B5', '#4CAF50', '#FF9800', '#795548', '#607D8B'],
             hoverOffset: 4
           }]
         },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              position: 'top',
-              labels: {
-                color: primaryTextColor
-              }
-            }
-          }
-        }
+        options: { responsive: true, plugins: { legend: { position: 'top', labels: { color: primaryTextColor } } } }
       });
     }
 
@@ -336,22 +424,15 @@
       });
 
       const sortedDates = Object.keys(dailyTotals).sort();
-      const labels = sortedDates.map(date =>
-        new Date(date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })
-      );
+      const labels = sortedDates.map(date => new Date(date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }));
       const dailyData = sortedDates.map(date => dailyTotals[date]);
       const averageData = Array(labels.length).fill(avgDaily);
 
-      const lineColor1 = getComputedStyle(document.documentElement)
-        .getPropertyValue('--line-chart-color-1').trim();
-      const lineColor2 = getComputedStyle(document.documentElement)
-        .getPropertyValue('--line-chart-color-2').trim();
-      const secondaryTextColor = getComputedStyle(document.documentElement)
-        .getPropertyValue('--secondary-text-color').trim();
-      const secondarySurfaceColor = getComputedStyle(document.documentElement)
-        .getPropertyValue('--secondary-surface-color').trim();
-      const primaryTextColor = getComputedStyle(document.documentElement)
-        .getPropertyValue('--primary-text-color').trim();
+      const lineColor1 = getComputedStyle(document.documentElement).getPropertyValue('--line-chart-color-1').trim();
+      const lineColor2 = getComputedStyle(document.documentElement).getPropertyValue('--line-chart-color-2').trim();
+      const secondaryTextColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-text-color').trim();
+      const secondarySurfaceColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-surface-color').trim();
+      const primaryTextColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-text-color').trim();
 
       if (dailyAverageChart) dailyAverageChart.destroy();
 
@@ -360,49 +441,20 @@
         data: {
           labels: labels,
           datasets: [
-            {
-              label: 'Daily Spend',
-              data: dailyData,
-              borderColor: lineColor1,
-              backgroundColor: lineColor1,
-              tension: 0.3,
-              borderWidth: 2
-            },
-            {
-              label: 'Average Daily Spend',
-              data: averageData,
-              borderColor: lineColor2,
-              backgroundColor: lineColor2,
-              borderDash: [5, 5],
-              pointRadius: 0,
-              borderWidth: 2
-            }
+            { label: 'Daily Spend', data: dailyData, borderColor: lineColor1, backgroundColor: lineColor1, tension: 0.3, borderWidth: 2 },
+            { label: 'Average Daily Spend', data: averageData, borderColor: lineColor2, backgroundColor: lineColor2, borderDash: [5, 5], pointRadius: 0, borderWidth: 2 }
           ]
         },
         options: {
           responsive: true,
           scales: {
-            y: {
-              ticks: { color: secondaryTextColor },
-              grid: { color: secondarySurfaceColor }
-            },
-            x: {
-              ticks: { color: secondaryTextColor },
-              grid: { color: secondarySurfaceColor }
-            }
+            y: { ticks: { color: secondaryTextColor }, grid: { color: secondarySurfaceColor } },
+            x: { ticks: { color: secondaryTextColor }, grid: { color: secondarySurfaceColor } }
           },
-          plugins: {
-            legend: {
-              labels: {
-                color: primaryTextColor
-              }
-            }
-          }
+          plugins: { legend: { labels: { color: primaryTextColor } } }
         }
       });
     }
   </script>
 </body>
 </html>
-
-     
